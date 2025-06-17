@@ -1,4 +1,3 @@
-
 cmake_minimum_required(VERSION 3.16)
 project(CollaborativeEditor VERSION 0.1.0 LANGUAGES CXX)
 
@@ -20,11 +19,8 @@ else()
 endif()
 
 # External dependencies
-find_package(Qt6 COMPONENTS Core Widgets REQUIRED)
 find_package(Boost COMPONENTS system thread REQUIRED)
 find_package(nlohmann_json REQUIRED)
-find_package(spdlog REQUIRED)
-find_package(websocketpp REQUIRED)
 find_package(OpenSSL REQUIRED)
 
 # Include directories
@@ -35,6 +31,8 @@ add_subdirectory(src/common)
 
 # Client application
 if(BUILD_CLIENT)
+    # Qt is only needed if building the client
+    find_package(Qt6 COMPONENTS Core Widgets REQUIRED)
     add_subdirectory(src/client)
 endif()
 
@@ -54,7 +52,7 @@ endif()
 add_subdirectory(third_party)
 
 # Install rules
-install(TARGETS collabEditor collabServer
-        RUNTIME DESTINATION bin
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib)
+install(TARGETS 
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib)
