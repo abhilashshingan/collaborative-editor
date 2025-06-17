@@ -1,0 +1,100 @@
+CollabEdit - Collaborative Text Editor
+A real-time collaborative text editor built with C++20, featuring CRDT-based conflict resolution and cross-platform compatibility.
+
+Overview
+CollabEdit is a performant, distributed text editing system allowing multiple users to work on the same document simultaneously. Using Conflict-free Replicated Data Types (CRDTs), it ensures eventual consistency without central coordination, making it resilient to network issues and enabling offline work.
+
+Features
+Real-time Collaboration
+
+Multi-user simultaneous editing
+User presence indicators and cursor tracking
+Conflict-free editing with CRDT technology
+Rich Text Editing
+
+Syntax highlighting
+Code folding
+Search & replace with regex
+Modern Architecture
+
+Client-server architecture with WebSocket communication
+Eventual consistency with no locking
+Distributed operation across high-latency networks
+Robust Implementation
+
+C++20 features (concepts, ranges, spaceship operator)
+Cross-platform compatibility (Linux, macOS, Windows)
+Comprehensive test suite
+Build Requirements
+C++20 compatible compiler (GCC 10+, Clang 10+, MSVC 19.28+)
+CMake 3.16+
+Qt 6.0+
+Boost, OpenSSL, nlohmann_json, spdlog, websocketpp
+Quick Start
+Using the build script (Linux/macOS)
+bash
+# Clone the repository
+git clone https://github.com/yourusername/collabedit.git
+cd collabedit
+
+# Build the project (installs dependencies automatically)
+./build.sh
+
+# Run tests
+./build.sh --test
+Manual build
+bash
+mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake --build . --parallel
+Running the application
+bash
+# Start the server
+./build/src/server/collabServer
+
+# In another terminal, start the client
+./build/src/client/collabEditor
+Usage Example
+Launch the server
+Connect multiple clients to the server
+Open or create a document
+Start collaborative editing - all changes synchronize in real-time
+Continue working offline; changes sync when reconnected
+Contributing
+Contributions are welcome! Please see CONTRIBUTING.md for details.
+
+License
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+-------------
+
+
+Build Instructions
+Quick Setup
+bash
+# Clone the repository
+git clone https://github.com/your-username/collaborative-editor.git
+cd collaborative-editor
+
+# Build the project (installs dependencies and compiles)
+./build.sh
+Advanced Options
+bash
+# Debug build with tests
+./build.sh --debug --test
+
+# Clean build
+./build.sh --clean
+Usage
+bash
+# Start the server
+./build/src/server/collabServer
+
+# In another terminal, launch the editor
+./build/src/client/collabEditor
+
+# Connect to a server at a specific address
+./build/src/client/collabEditor --server 192.168.1.10:8080
+
+# Open a specific document
+./build/src/client/collabEditor --document my_document.txt

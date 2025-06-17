@@ -1,0 +1,143 @@
+# Build directories
+build/
+Debug/
+Release/
+x64/
+out/
+CMakeFiles/
+CMakeCache.txt
+CMakeUserPresets.json
+compile_commands.json
+cmake-build-*/
+
+# Cache directories
+.cache/
+__pycache__/
+
+# Log files
+*.log
+logs/
+cmake_install.cmake
+install_manifest.txt
+
+# Generated files
+Makefile
+*.make
+*.o
+*.obj
+*.exe
+*.out
+*.app
+*.so
+*.dylib
+*.dll
+*.lib
+*.a
+*.la
+*.lo
+*.def
+*.exp
+*.pdb
+*.ilk
+*.moc
+moc_*.cpp
+moc_*.h
+qrc_*.cpp
+ui_*.h
+*.qm
+
+# Qt-specific
+.qmake.stash
+.qt/
+*.pro.user
+*.pro.user.*
+*.qbs.user
+*.qbs.user.*
+*.rej
+
+# Editor specific
+## Visual Studio
+.vs/
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.userprefs
+ipch/
+*.VC.db
+*.VC.VC.opendb
+*.opensdf
+*.sdf
+*.suo
+
+## VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+## CLion
+.idea/
+*.iml
+*.iws
+*.ipr
+.idea_modules/
+cmake-build-*/
+
+## Xcode
+xcuserdata/
+*.xcscmblueprint
+*.xccheckout
+DerivedData/
+
+# OS specific files
+## macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+## Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+*.lnk
+
+## Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# Project specific
+## Generated documentation
+docs/html/
+docs/latex/
+doxygen_sqlite3.db
+
+## Testing
+Testing/
+CTestTestfile.cmake
+/googletest-*
+
+## Dependencies
+third_party/downloaded/*
+!third_party/downloaded/.gitkeep
+
+## Generated protocol files
+src/common/protocol/generated/*
+!src/common/protocol/generated/.gitkeep
+
+# Local configuration
+.env
+.env.local
+env/
+config.local.json
