@@ -1,21 +1,13 @@
-
-# Common library shared between client and server
+# Common library
 set(COMMON_SOURCES
-    protocol/message.cpp
-    protocol/serialization.cpp
-    crdt/document.cpp
-    crdt/operation.cpp
-    util/logger.cpp
-    models/user.cpp
+    models/file_system.cpp
     models/document.cpp
+    protocol/protocol.cpp
+    crdt/crdt_document.cpp
+    util/uuid_generator.cpp
 )
 
-file(GLOB_RECURSE COMMON_HEADERS
-    "${CMAKE_SOURCE_DIR}/include/common/*.h"
-    "${CMAKE_SOURCE_DIR}/include/common/*.hpp"
-)
-
-add_library(common STATIC ${COMMON_SOURCES} ${COMMON_HEADERS})
+add_library(common STATIC ${COMMON_SOURCES})
 
 target_include_directories(common
     PUBLIC
@@ -24,10 +16,11 @@ target_include_directories(common
 
 target_link_libraries(common
     PUBLIC
-    nlohmann_json::nlohmann_json
-    spdlog::spdlog
     Boost::system
+    Boost::thread
+    nlohmann_json::nlohmann_json
     OpenSSL::SSL
+    OpenSSL::Crypto
 )
 
 # C++20 specific compile features
