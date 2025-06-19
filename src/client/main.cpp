@@ -1,8 +1,12 @@
+// src/client/main.cpp
+#include <iostream>
+#ifdef QT_VERSION
 #include <QApplication>
 #include <QLabel>
-#include <iostream>
+#endif
 
 int main(int argc, char *argv[]) {
+#ifdef QT_VERSION
     QApplication app(argc, argv);
     
     QLabel label("Collaborative Editor (Client)");
@@ -13,4 +17,10 @@ int main(int argc, char *argv[]) {
     std::cout << "Collaborative Editor Client started\n";
     
     return app.exec();
+#else
+    std::cout << "Collaborative Editor Client (console)\n";
+    std::cout << "Qt not available, running in console mode\n";
+    
+    return 0;
+#endif
 }
