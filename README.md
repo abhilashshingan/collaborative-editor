@@ -9,6 +9,7 @@ This repository contains the implementation of a C++ Collaborative Text Editor w
 1. File System Data Structures
 2. Network Message Protocol
 3. TCP Communication Channel using Boost.Asio
+4. User Session Management with RAII
 
 ## File Structure
 
@@ -21,6 +22,16 @@ Implements a robust TCP server that handles client connections:
 - Nested `Connection` class for managing individual client connections
 - Asynchronous I/O for high performance
 - Thread-safe connection management
+
+### Session Handler (`include/server/session_handler.h`)
+
+Manages user sessions and their connections:
+
+- `SessionHandler`: Central manager for user sessions
+- `UserSession`: Represents user state, authentication, and document access
+- `SocketGuard`: RAII wrapper for socket lifecycle management
+- Thread-safe session tracking
+- Automatic idle session cleanup
 
 ### File System Data Structures (`include/common/models/file_system.h`)
 
@@ -61,6 +72,10 @@ Implements network communication using Boost.Asio:
 - Thread-safe operations
 - Graceful shutdown on SIGINT/SIGTERM
 - Configurable thread pool for concurrent client session handling
+- RAII-based socket lifecycle management
+- User session tracking and authentication
+- Document access control
+- Automatic idle session cleanup
 
 ## Server Implementation
 
@@ -86,7 +101,13 @@ The server implementation in `include/server/server.h` and `src/server/server.cp
    - Efficient load balancing across threads
    - Thread-safe task queue
 
-5. **Robust Error Handling**
+5. **Session Management**
+   - User identification and authentication
+   - Session state tracking
+   - Document access tracking
+   - RAII-based resource management
+
+6. **Robust Error Handling**
    - Comprehensive error detection
    - Recovery mechanisms
    - Detailed error reporting
@@ -111,6 +132,32 @@ The `ThreadPool` class provides:
    - Properly joins all worker threads on destruction
    - Handles remaining tasks before shutting down
 
+## Session Handler Implementation
+
+The `SessionHandler` class provides:
+
+1. **User Session Management**
+   - Creating and tracking user sessions
+   - Authentication and username validation
+   - Document access tracking
+   - Session state management
+   - Idle session cleanup
+
+2. **RAII Socket Management**
+   - Automatic socket lifecycle management via `SocketGuard`
+   - Ensures sockets are properly closed when sessions end
+   - Prevents resource leaks and zombie connections
+
+3. **Thread Safety**
+   - Mutex-protected data structures
+   - Safe for concurrent access from multiple threads
+   - Proper synchronization of session state changes
+
+4. **Document Collaboration**
+   - Tracking which users are active on which documents
+   - Supporting document-specific operations
+   - Managing document sharing and access
+
 ## Usage Example
 
 The `examples/collaborative_example.cpp` demonstrates:
@@ -125,14 +172,49 @@ The `examples/collaborative_example.cpp` demonstrates:
 
 ### Prerequisites
 
-- C++20 compliant compiler
-- Boost libraries (Asio, Bind, Program_Options)
+- C++20 compliant compiler (e.g., GCC 10+, Clang 10+)
+- Boost libraries (Asio, Bind, Program_Options, UUID)
 - nlohmann_json
 - CMake 3.16+
+- Optional: Qt6 for client GUI, Google Test for unit tests
 
 ### Build Commands
 
 ```bash
 mkdir build && cd build
 cmake ..
-make
+cmake --build .
+```
+
+### Installation
+
+```bash
+cmake --install .
+```
+
+### Running the Server
+
+```bash
+./install/bin/server
+```
+
+### Running Tests
+
+```bash
+cd build
+ctest --output-on-failure
+```
+
+## Contributing
+
+Contributions are welcome! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/your-feature`)
+3. Commit your changes (`git commit -am 'Add your feature'`)
+4. Push to the branch (`git push origin feature/your-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License. See the `LICENSE` file for details.

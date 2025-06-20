@@ -1,87 +1,106 @@
-// src/server/main.cpp
 #include <iostream>
 #include <string>
-#include <memory>
-#include <csignal>
+#include <vector>
+#include <unordered_map>
+#include <mutex>
 #include <boost/asio.hpp>
-#include <boost/program_options.hpp>
-
 #include "server/server.h"
+#include "common/crdt/document.h"
 
-// Default port to listen on
-constexpr unsigned short DEFAULT_PORT = 8080;
-// Default thread pool size (0 = use hardware concurrency)
-constexpr unsigned int DEFAULT_THREAD_POOL_SIZE = 0;
-// Default session cleanup interval (in seconds)
-constexpr int DEFAULT_SESSION_CLEANUP_INTERVAL = 300; // 5 minutes
-// Default maximum session idle time before cleanup (in seconds)
-constexpr int DEFAULT_MAX_SESSION_IDLE_TIME = 3600; // 1 hour
+namespace collab {
+namespace server {
 
-int main(int argc, char* argv[]) {
-    unsigned short port = DEFAULT_PORT;
-    unsigned int thread_pool_size = DEFAULT_THREAD_POOL_SIZE;
-    int session_cleanup_interval = DEFAULT_SESSION_CLEANUP_INTERVAL;
-    int max_session_idle_time = DEFAULT_MAX_SESSION_IDLE_TIME;
-    
-    // Parse command line options if provided
-    try {
-        namespace po = boost::program_options;
-        po::options_description desc("Collaborative Text Editor Server");
-        desc.add_options()
-            ("help", "Display this help message")
-            ("port,p", po::value<unsigned short>(&port)->default_value(DEFAULT_PORT), 
-             "Port to listen on")
-            ("threads,t", po::value<unsigned int>(&thread_pool_size)->default_value(DEFAULT_THREAD_POOL_SIZE),
-             "Number of worker threads (0 = use hardware concurrency)")
-            ("cleanup-interval,c", po::value<int>(&session_cleanup_interval)->default_value(DEFAULT_SESSION_CLEANUP_INTERVAL),
-             "Session cleanup interval in seconds")
-            ("max-idle,i", po::value<int>(&max_session_idle_time)->default_value(DEFAULT_MAX_SESSION_IDLE_TIME),
-             "Maximum session idle time before cleanup in seconds");
+class CollaborativeServer {
+public:
+    CollaborativeServer(unsigned short port)
+        : io_context_(),
+          server_(io_context_, port),
+          document_(std::make_shared<crdt::Document>()) {
         
-        po::variables_map vm;
-        po::store(po::parse_command_line(argc, argv, desc), vm);
-        po::notify(vm);
+        // Set up message handlers
+        server_.setMessageHandler([this](const std::string& client_id, const std::string& message) {
+            handleMessage(client_id, message);
+        });
         
-        if (vm.count("help")) {
-            std::cout << desc << "\n";
-            return 0;
-        }
-    } 
-    catch (const std::exception& e) {
-        std::cerr << "Error parsing command line: " << e.what() << "\n";
-        return 1;
+        // Set up connection handlers
+        server_.setConnectionHandler([this](const std::string& client_id) {
+            handleNewConnection(client_id);
+        });
+        
+        server_.setDisconnectionHandler([this](const std::string& client_id) {
+            handleDisconnection(client_id);
+        });
     }
     
-    // If thread pool size is 0, use hardware concurrency
-    if (thread_pool_size == 0) {
-        thread_pool_size = std::thread::hardware_concurrency();
-        // Ensure at least 2 threads
-        if (thread_pool_size < 2) {
-            thread_pool_size = 2;
+    void run() {
+        try {
+            std::cout << "Collaborative Text Editor Server is running...\n";
+            io_context_.run();
+        } catch (const std::exception& e) {
+            std::cerr << "Error: " << e.what() << "\n";
         }
     }
     
-    try {
-        // Initialize the io_context
-        boost::asio::io_context io_context;
-        
-        // Create and start the server
-        std::cout << "Starting Collaborative Text Editor Server...\n";
-        collab::server::Server server(io_context, port, thread_pool_size, 
-                                      session_cleanup_interval, max_session_idle_time);
-        
-        // Output the actual number of threads being used
-        std::cout << "Server using " << server.getThreadPoolSize() << " worker threads\n";
-        std::cout << "Session cleanup interval: " << session_cleanup_interval << " seconds\n";
-        std::cout << "Maximum session idle time: " << max_session_idle_time << " seconds\n";
-        
-        // The io_context will run until the server shuts down due to SIGINT/SIGTERM
-        io_context.run();
-        
-        std::cout << "Server stopped gracefully\n";
+private:
+    void handleMessage(const std::string& client_id, const std::string& message) {
+        if (message.substr(0, 6) == "UPDATE") {
+            // Extract content part of the message
+            std::string content = message.substr(7); // Skip "UPDATE "
+            
+            // Update the document
+            {
+                std::lock_guard<std::mutex> lock(document_mutex_);
+                document_->updateContent(content);
+            }
+            
+            // Broadcast to all other clients
+            broadcastUpdate(client_id);
+        }
     }
-    catch (const std::exception& e) {
-        std::cerr << "Fatal error: " << e.what() << std::endl;
+    
+    void handleNewConnection(const std::string& client_id) {
+        std::cout << "New client connected: " << client_id << "\n";
+        
+        // Send the current document state to the new client
+        std::string content;
+        {
+            std::lock_guard<std::mutex> lock(document_mutex_);
+            content = document_->getContent();
+        }
+        
+        server_.sendMessage(client_id, "CONTENT " + content);
+    }
+    
+    void handleDisconnection(const std::string& client_id) {
+        std::cout << "Client disconnected: " << client_id << "\n";
+    }
+    
+    void broadcastUpdate(const std::string& source_client_id) {
+        std::string content;
+        {
+            std::lock_guard<std::mutex> lock(document_mutex_);
+            content = document_->getContent();
+        }
+        
+        // Send to all clients except the source
+        server_.broadcastMessage("CONTENT " + content, source_client_id);
+    }
+    
+    boost::asio::io_context io_context_;
+    Server server_;
+    std::shared_ptr<crdt::Document> document_;
+    std::mutex document_mutex_;
+};
+
+} // namespace server
+} // namespace collab
+
+int main() {
+    try {
+        collab::server::CollaborativeServer server(8080);
+        server.run();
+    } catch (const std::exception& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
         return 1;
     }
     
