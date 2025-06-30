@@ -31,3 +31,33 @@ set_target_properties(collabEditor PROPERTIES
 
 # C++20 specific compile features
 target_compile_features(collabEditor PRIVATE cxx_std_20)
+
+# Add this to the project's main CMakeLists.txt under the client section
+
+# Find ncurses
+find_package(Curses REQUIRED)
+
+# Add ncurses client executable
+add_executable(ncurses_client 
+    src/client/ncurses_client.cpp
+)
+
+target_link_libraries(ncurses_client
+    PRIVATE
+    ${CURSES_LIBRARIES}
+    Boost::system
+    Boost::thread
+    pthread
+    common
+)
+
+target_include_directories(ncurses_client
+    PRIVATE
+    ${CURSES_INCLUDE_DIR}
+    ${PROJECT_SOURCE_DIR}/include
+)
+
+# Install ncurses client
+install(TARGETS ncurses_client
+    RUNTIME DESTINATION bin
+)

@@ -13,7 +13,7 @@ target_link_libraries(test_utils PUBLIC
 )
 
 # Common module tests
-file(GLOB_RECURSE COMMON_TEST_SOURCES
+file(GLOB_RECURSIVE COMMON_TEST_SOURCES
     "common/*.cpp"
 )
 
@@ -37,7 +37,7 @@ target_compile_features(common_tests PRIVATE cxx_std_20)
 
 # Server module tests
 if(BUILD_SERVER)
-    file(GLOB_RECURSE SERVER_TEST_SOURCES
+    file(GLOB_RECURSIVE SERVER_TEST_SOURCES
         "server/*.cpp"
     )
     
@@ -82,7 +82,7 @@ if(BUILD_CLIENT)
     endif()
 
     if(BUILD_CLIENT_TESTS)
-        file(GLOB_RECURSE CLIENT_TEST_SOURCES
+        file(GLOB_RECURSIVE CLIENT_TEST_SOURCES
             "client/*.cpp"
         )
         

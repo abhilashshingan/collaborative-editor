@@ -17,53 +17,65 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
-# Function to install dependencies based on OS
+# Function to install dependencies based on the detected OS
 install_dependencies() {
-    echo -e "${YELLOW}${BOLD}Installing dependencies...${RESET}"
-    
-    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        # Linux
-        if command_exists apt-get; then
-            # Debian/Ubuntu
-            echo -e "${YELLOW}Detected Debian/Ubuntu system${RESET}"
-            sudo apt-get update
-            sudo apt-get install -y build-essential cmake libboost-all-dev libssl-dev nlohmann-json3-dev libgtest-dev
-            # Try to install Qt6, fallback to Qt5 if not available
-            sudo apt-get install -y qt6-base-dev libxkbcommon-dev || sudo apt-get install -y qtbase5-dev
-        elif command_exists dnf; then
-            # Fedora
-            echo -e "${YELLOW}Detected Fedora system${RESET}"
-            sudo dnf install -y gcc-c++ cmake boost-devel openssl-devel json-c-devel gtest-devel
-            # Try to install Qt6, fallback to Qt5 if not available
-            sudo dnf install -y qt6-qtbase-devel || sudo dnf install -y qt5-qtbase-devel
-        elif command_exists pacman; then
-            # Arch Linux
-            echo -e "${YELLOW}Detected Arch Linux system${RESET}"
-            sudo pacman -Syu --noconfirm gcc cmake boost openssl nlohmann-json gtest
-            # Try to install Qt6, fallback to Qt5 if not available
-            sudo pacman -S --noconfirm qt6-base || sudo pacman -S --noconfirm qt5-base
-        else
-            echo -e "${RED}Unsupported Linux distribution. Please install dependencies manually.${RESET}"
-            exit 1
-        fi
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
-        # macOS
-        if command_exists brew; then
-            echo -e "${YELLOW}Detected macOS system${RESET}"
-            brew update
-            brew install cmake boost openssl nlohmann-json googletest
-            # Try to install Qt6, fallback to Qt5 if not available
-            brew install qt@6 || brew install qt@5
-        else
-            echo -e "${RED}Homebrew not found. Please install dependencies manually.${RESET}"
-            exit 1
-        fi
-    else
-        echo -e "${RED}Unsupported operating system. Please install dependencies manually.${RESET}"
-        exit 1
+  echo -e "${BLUE}Installing dependencies...${RESET}"
+
+  if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    if [[ -f /etc/debian_version ]]; then
+      # Debian/Ubuntu
+      echo "Detected Debian/Ubuntu system"
+      sudo apt-get update
+      sudo apt-get install -y \
+        build-essential cmake pkg-config \
+        libboost-all-dev \
+        libssl-dev \
+        nlohmann-json3-dev \
+        libspdlog-dev \
+        libgtest-dev \
+        qt6-base-dev \
+        libncurses-dev
+      
+    elif [[ -f /etc/fedora-release ]]; then
+      # Fedora
+      echo "Detected Fedora system"
+      sudo dnf install -y \
+        gcc-c++ cmake pkgconf \
+        boost-devel \
+        openssl-devel \
+        json-devel \
+        spdlog-devel \
+        gtest-devel \
+        qt6-qtbase-devel \
+        ncurses-devel
+      
+    elif [[ -f /etc/arch-release ]]; then
+      # Arch Linux
+      echo "Detected Arch Linux system"
+      sudo pacman -Sy --noconfirm \
+        base-devel cmake pkgconf \
+        boost \
+        openssl \
+        nlohmann-json \
+        spdlog \
+        gtest \
+        qt6-base \
+        ncurses
     fi
-    
-    echo -e "${GREEN}${BOLD}Dependencies installed successfully.${RESET}"
+  
+  elif [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS
+    echo "Detected macOS system"
+    brew install \
+      cmake \
+      boost \
+      openssl \
+      nlohmann-json \
+      spdlog \
+      googletest \
+      qt@6 \
+      ncurses
+  fi
 }
 
 # Function to create necessary placeholder files
@@ -215,7 +227,7 @@ target_link_libraries(test_utils PUBLIC
 )
 
 # Common module tests
-file(GLOB_RECURSE COMMON_TEST_SOURCES
+file(GLOB_RECURSIVE COMMON_TEST_SOURCES
     "common/*.cpp"
 )
 
@@ -239,7 +251,7 @@ target_compile_features(common_tests PRIVATE cxx_std_20)
 
 # Server module tests
 if(BUILD_SERVER)
-    file(GLOB_RECURSE SERVER_TEST_SOURCES
+    file(GLOB_RECURSIVE SERVER_TEST_SOURCES
         "server/*.cpp"
     )
     
@@ -284,7 +296,7 @@ if(BUILD_CLIENT)
     endif()
 
     if(BUILD_CLIENT_TESTS)
-        file(GLOB_RECURSE CLIENT_TEST_SOURCES
+        file(GLOB_RECURSIVE CLIENT_TEST_SOURCES
             "client/*.cpp"
         )
         
@@ -1861,14 +1873,96 @@ The `examples/collaborative_example.cpp` demonstrates:
 
 ### Prerequisites
 
-- C++20 compliant compiler
+- C++20 compliant compiler (e.g., GCC 10+, Clang 10+)
 - Boost libraries (Asio, Bind, Program_Options, UUID)
 - nlohmann_json
 - CMake 3.16+
+- Optional: Qt6 for client GUI, Google Test for unit tests
 
 ### Build Commands
 
 ```bash
 mkdir build && cd build
 cmake ..
-make
+cmake --build .
+```
+
+### Installation
+
+```bash
+cmake --install .
+```
+
+### Running the Server
+
+```bash
+./install/bin/server
+```
+
+### Running Tests
+
+```bash
+cd build
+ctest --output-on-failure
+```
+
+## Contributing
+
+Contributions are welcome! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/your-feature`)
+3. Commit your changes (`git commit -am 'Add your feature'`)
+4. Push to the branch (`git push origin feature/your-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License. See the `LICENSE` file for details.
+EOF
+    
+    echo -e "${GREEN}${BOLD}README.md updated successfully.${RESET}"
+}
+
+# Main execution logic
+echo -e "${GREEN}${BOLD}Starting build process for Collaborative Text Editor...${RESET}"
+
+# Parse command line arguments
+RUN_TESTS=0
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --tests)
+            RUN_TESTS=1
+            shift
+            ;;
+        *)
+            echo -e "${RED}Unknown option: $1${RESET}"
+            exit 1
+            ;;
+    esac
+done
+
+# Install dependencies
+install_dependencies
+
+# Create placeholder files
+create_placeholder_files
+
+# Create test CMakeLists.txt
+create_tests_cmake
+
+# Create server files
+create_server_files
+
+# Update README
+update_readme
+
+# Build the project
+build_project
+
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}${BOLD}Build process completed successfully.${RESET}"
+else
+    echo -e "${RED}${BOLD}Build process failed.${RESET}"
+    exit 1
+fi
